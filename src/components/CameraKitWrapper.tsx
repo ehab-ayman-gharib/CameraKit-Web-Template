@@ -75,30 +75,48 @@ export const CameraKitWrapper = () => {
 
             } else if (file.type.startsWith('video/')) {
                 const video = document.createElement('video');
-                video.src = url;
+                // Set these BEFORE src for better mobile compatibility
                 video.muted = true;
                 video.loop = true;
                 video.playsInline = true;
+                (video as any).webkitPlaysInline = true; // For older iOS browsers
                 video.crossOrigin = "anonymous";
+                video.src = url;
 
                 await new Promise((resolve, reject) => {
-                    video.oncanplay = resolve;
-                    video.onerror = reject;
+                    // canplaythrough is more reliable for mobile to ensure enough data is buffered
+                    video.oncanplaythrough = resolve;
+                    video.onloadedmetadata = () => {
+                        // Ensure dimensions are captured as soon as they are available
+                        resolve(null);
+                    };
+                    video.onerror = (e) => {
+                        console.error('Video element error:', e);
+                        reject(new Error('Failed to load video file'));
+                    };
+
+                    // Cleanup timeout for mobile
+                    setTimeout(() => resolve(null), 5000);
                 });
 
-                // Optimization for mobile: scale down high-res videos to improve performance
-                // Camera Kit performs best at around 720p or lower on mobile devices
+                // Optimization for mobile: scale down high-res videos
                 const MAX_DIMENSION = 1280;
-                if (video.videoWidth > MAX_DIMENSION || video.videoHeight > MAX_DIMENSION) {
+                if (video.videoWidth > 0 && (video.videoWidth > MAX_DIMENSION || video.videoHeight > MAX_DIMENSION)) {
                     const scale = MAX_DIMENSION / Math.max(video.videoWidth, video.videoHeight);
                     video.width = video.videoWidth * scale;
                     video.height = video.videoHeight * scale;
-                } else {
+                } else if (video.videoWidth > 0) {
                     video.width = video.videoWidth;
                     video.height = video.videoHeight;
                 }
 
-                await video.play();
+                // Attempt to play, catching potential autoplay errors
+                try {
+                    await video.play();
+                } catch (e) {
+                    console.warn('Autoplay prevented, retrying after interaction if needed', e);
+                }
+
                 const videoSource = createVideoSource(video);
                 await sessionRef.current.setSource(videoSource.copy());
                 await sessionRef.current.play();
