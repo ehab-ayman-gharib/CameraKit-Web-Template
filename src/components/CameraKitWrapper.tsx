@@ -26,6 +26,7 @@ export const CameraKitWrapper = () => {
     const holdTimerRef = useRef<any>(null);
 
 
+    //@ts-ignore
     // Handle lens selection
     const handleSelectLens = (lensId: string) => {
         console.log('Selected lens:', lensId);
