@@ -1,9 +1,8 @@
-import './App.css'
 import { CameraKitWrapper } from './components/CameraKitWrapper'
 
 function App() {
   return (
-    <div className="app-container">
+    <div className="w-full h-full">
       <CameraKitWrapper />
     </div>
   )

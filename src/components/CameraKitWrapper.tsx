@@ -329,86 +329,104 @@ export const CameraKitWrapper = () => {
     // Error Handling 
     if (error) {
         return (
-            <div style={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                height: '100vh',
-                color: 'red',
-                backgroundColor: '#1a1a1a'
-            }}>
-                <h2>{error}</h2>
+            <div className="flex flex-col justify-center items-center h-screen text-red-600 bg-[#1a1a1a] p-5 text-center">
+                <h2 className="text-2xl font-bold mb-4">{error}</h2>
+                <button
+                    onClick={() => window.location.reload()}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                    Retry
+                </button>
             </div>
         );
     }
 
     return (
         // Camera Container
-        <div className="camera-container">
+        <div className="relative w-screen h-screen bg-black overflow-hidden select-none">
             <canvas
                 ref={canvasRef}
                 id="CameraKit-AR-Canvas"
-                className="camera-canvas"
+                className="absolute inset-0 w-full h-full block object-cover z-0"
             />
-            {/* Captured Image/Video */}
+            {/* Captured Image/Video Preview */}
             {(capturedImage || recordedVideoUrl) && (
-                <div className="captured-image-container">
+                <div className="fixed inset-0 z-50 bg-black animate-photoAppear">
                     {capturedImage ? (
-                        <img src={capturedImage} alt="Captured" className="captured-image" />
+                        <img src={capturedImage} alt="Captured" className="w-full h-full object-cover block" />
                     ) : (
-                        <video src={recordedVideoUrl!} controls autoPlay loop className="captured-image" />
+                        <video src={recordedVideoUrl!} controls autoPlay loop className="w-full h-full object-cover block" />
                     )}
-                    <button className="close-button-absolute" onClick={handleClosePreview} aria-label="Close Preview">
-                        <svg viewBox="0 0 24 24" width="24" height="24">
-                            <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                    <button
+                        className="absolute top-6 left-6 z-[60] w-11 h-11 flex items-center justify-center bg-black/50 backdrop-blur-lg rounded-full text-white border border-white/20 cursor-pointer pointer-events-auto active:scale-90 transition-all duration-200 p-0"
+                        onClick={handleClosePreview}
+                        aria-label="Close Preview"
+                    >
+                        <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
                         </svg>
                     </button>
                 </div>
             )}
 
             {/* Flash Effect */}
-            {showFlash && <div className="flash-overlay" />}
+            {showFlash && <div className="fixed inset-0 bg-white z-[100] pointer-events-none animate-flashAnim" />}
 
             {/* Loading Overlay */}
             {isLoading && (
-                <div className="loading-overlay">
-                    <div className="loading-spinner"></div>
+                <div className="fixed inset-0 bg-black/30 backdrop-blur-[2px] flex flex-col justify-center items-center z-[2000] text-white">
+                    <div className="w-[50px] h-[50px] border-[5px] border-white/30 border-t-white rounded-full animate-spin mb-5"></div>
                 </div>
             )}
+
             {/* UI Overlay */}
             {(!capturedImage && !recordedVideoUrl) ? (
-                <div className="ui-overlay">
+                <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-5 z-10 font-sans">
                     {/* Top Bar */}
-                    <div className="top-bar">
-                        <button className="icon-button" aria-label="Flip Camera" onClick={handleFlipCamera}>
-                            <svg viewBox="0 0 24 24">
+                    <div className="flex justify-end pt-2.5 pointer-events-auto">
+                        <button
+                            className="w-12 h-12 p-0 rounded-full bg-black/40 backdrop-blur-md border-none flex items-center justify-center text-white cursor-pointer transition-all active:scale-95"
+                            aria-label="Flip Camera"
+                            onClick={handleFlipCamera}
+                        >
+                            <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current">
                                 <path d="M20 4h-3.17L15 2H9L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-5 11.5V13H9v2.5L5.5 12 9 8.5V11h6V8.5l3.5 3.5-3.5 3.5z" />
                             </svg>
                         </button>
                     </div>
 
                     {/* Bottom Controls */}
-                    <div className="bottom-controls">
-                        {isRecording && <div className="recording-indicator">REC</div>}
-                        <div className="controls-row">
-                            <button className="icon-button" aria-label="Gallery" onClick={handleGalleryClick}>
-                                <svg viewBox="0 0 24 24">
+                    <div className="flex flex-col items-center w-full pb-[30px] pointer-events-auto relative">
+                        {isRecording && (
+                            <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-red-600/90 text-white px-3 py-1 rounded font-bold text-xs tracking-widest animate-blink uppercase z-20">
+                                REC
+                            </div>
+                        )}
+                        <div className="grid grid-cols-[1fr_auto_1fr] items-center w-full max-w-[440px] px-5 gap-5">
+                            <button
+                                className="w-12 h-12 p-0 rounded-full bg-black/40 backdrop-blur-md border-none flex items-center justify-center text-white cursor-pointer transition-all active:scale-95"
+                                aria-label="Gallery"
+                                onClick={handleGalleryClick}
+                            >
+                                <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current">
                                     <path d="M22 16V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2zm-11-4l2.03 2.71L16 11l4 5H8l3-4zM2 6v14c0 1.1.9 2 2 2h14v-2H4V6H2z" />
                                 </svg>
                             </button>
 
                             <button
-                                className={`shutter-button ${isRecording ? 'recording' : ''}`}
+                                className={`relative w-[76px] h-[76px] p-0 rounded-full border-[3px] flex items-center justify-center cursor-pointer transition-all duration-200 backdrop-blur-[2px] active:scale-90 ${isRecording ? 'border-red-500 bg-red-500/20 shadow-[0_0_0_8px_rgba(255,75,43,0.3)] animate-recordingRipple' : 'border-white/90 bg-white/10 after:content-[""] after:absolute after:inset-0 after:border-2 after:border-white/80 after:rounded-full after:animate-idleRipple'
+                                    }`}
                                 aria-label="Take Photo or Record"
                                 onMouseDown={handleShutterDown}
                                 onMouseUp={handleShutterUp}
                                 onTouchStart={handleShutterDown}
                                 onTouchEnd={handleShutterUp}
                             >
-                                <div className="shutter-inner" />
+                                <div className={`transition-all duration-300 transform-gpu ${isRecording ? 'w-6 h-6 bg-red-500 rounded-sm' : 'w-[60px] h-[60px] bg-white rounded-full shadow-[0_4px_12px_rgba(0,0,0,0.2)]'
+                                    }`} />
                             </button>
 
-                            <div className="spacer" />
+                            <div className="w-full" />
                         </div>
                     </div>
 
@@ -416,7 +434,7 @@ export const CameraKitWrapper = () => {
                     <input
                         type="file"
                         ref={fileInputRef}
-                        style={{ display: 'none' }}
+                        className="hidden"
                         accept="image/*,video/*"
                         onChange={handleFileChange}
                     />
