@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { bootstrapCameraKit, createMediaStreamSource, Transform2D } from '@snap/camera-kit';
+import { bootstrapCameraKit, createMediaStreamSource, Transform2D, createImageSource, createVideoSource } from '@snap/camera-kit';
 import { CAMERAKIT_CONFIG } from '../config/camerakit';
 
 export const CameraKitWrapper = () => {
@@ -51,46 +51,60 @@ export const CameraKitWrapper = () => {
         setIsLoading(true);
 
         try {
-            // Stop previous stream
+            // Stop previous camera stream if it exists
             if (streamRef.current) {
                 streamRef.current.getTracks().forEach(track => track.stop());
+                streamRef.current = null;
             }
 
-            let stream: MediaStream;
             const url = URL.createObjectURL(file);
 
             if (file.type.startsWith('image/')) {
                 const img = new Image();
+                img.crossOrigin = "anonymous";
                 img.src = url;
+
                 await new Promise((resolve, reject) => {
                     img.onload = resolve;
                     img.onerror = reject;
                 });
 
-                const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                const ctx = canvas.getContext('2d');
-                ctx?.drawImage(img, 0, 0);
-                // @ts-ignore
-                stream = canvas.captureStream();
+                const imageSource = await createImageSource(img);
+                await sessionRef.current.setSource(imageSource.copy());
+                await sessionRef.current.play();
+
             } else if (file.type.startsWith('video/')) {
                 const video = document.createElement('video');
                 video.src = url;
                 video.muted = true;
                 video.loop = true;
                 video.playsInline = true;
+                video.crossOrigin = "anonymous";
+
+                await new Promise((resolve, reject) => {
+                    video.oncanplay = resolve;
+                    video.onerror = reject;
+                });
+
+                // Optimization for mobile: scale down high-res videos to improve performance
+                // Camera Kit performs best at around 720p or lower on mobile devices
+                const MAX_DIMENSION = 1280;
+                if (video.videoWidth > MAX_DIMENSION || video.videoHeight > MAX_DIMENSION) {
+                    const scale = MAX_DIMENSION / Math.max(video.videoWidth, video.videoHeight);
+                    video.width = video.videoWidth * scale;
+                    video.height = video.videoHeight * scale;
+                } else {
+                    video.width = video.videoWidth;
+                    video.height = video.videoHeight;
+                }
+
                 await video.play();
-                // @ts-ignore
-                stream = video.captureStream();
+                const videoSource = createVideoSource(video);
+                await sessionRef.current.setSource(videoSource.copy());
+                await sessionRef.current.play();
             } else {
                 throw new Error('Unsupported file type');
             }
-
-            streamRef.current = stream;
-            const source = createMediaStreamSource(stream);
-            await sessionRef.current.setSource(source);
-            await sessionRef.current.play();
 
             setIsLoading(false);
         } catch (err: any) {
