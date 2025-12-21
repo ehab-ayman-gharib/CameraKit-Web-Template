@@ -25,6 +25,17 @@ export const CameraKitWrapper = () => {
     const recordingChunksRef = useRef<Blob[]>([]);
     const holdTimerRef = useRef<any>(null);
 
+    // Audio Refs
+    const shutterSound = useRef<HTMLAudioElement | null>(null);
+
+    // Initialize Audio
+    useEffect(() => {
+        shutterSound.current = new Audio('/sounds/shutter.mp3');
+
+        // Preload sounds
+        shutterSound.current.load();
+    }, []);
+
 
     //@ts-ignore
     // Handle lens selection
@@ -156,6 +167,12 @@ export const CameraKitWrapper = () => {
     const handleTakePhoto = () => {
         if (canvasRef.current) {
             try {
+                // Play shutter sound
+                if (shutterSound.current) {
+                    shutterSound.current.currentTime = 0;
+                    shutterSound.current.play().catch(e => console.warn("Audio play prevented", e));
+                }
+
                 // Trigger flash
                 setShowFlash(true);
 
