@@ -320,9 +320,8 @@ export const CameraKitWrapper = () => {
                 await sessionRef.current.play();
                 await source.setRenderSize(1080, 1920);
 
-                if (isMounted) {
-                    setIsLoading(false);
-                }
+                // Don't hide loader here - let the lens application effect handle it
+                // so the loader stays visible until the lens is fully applied
             } catch (err: any) {
                 console.error('Camera Stream Error:', err);
                 if (isMounted) setError(err.message || 'Failed to start camera stream');
@@ -346,6 +345,9 @@ export const CameraKitWrapper = () => {
 
         const applyLens = async () => {
             try {
+                // Show loader while applying lens
+                if (isMounted) setIsLoading(true);
+
                 // Attempt to remove the current lens before loading the new one
                 // We check if the method exists to avoid runtime errors if the SDK version differs
                 if (sessionRef.current.removeLens) {
@@ -361,10 +363,14 @@ export const CameraKitWrapper = () => {
                 console.log('Applying lens:', currentLensId);
                 await sessionRef.current.applyLens(lens);
                 console.log('Lens applied successfully:', currentLensId);
+
+                // Hide loader after lens is applied
+                if (isMounted) setIsLoading(false);
             } catch (e) {
                 console.error('Failed to apply lens:', e);
-                // If it's the first lens, we might want to retry or show a specific error
+                // Hide loader on error as well
                 if (isMounted) {
+                    setIsLoading(false);
                     // Optional: handle specific error states here
                 }
             }
