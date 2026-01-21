@@ -12,7 +12,7 @@ export const CameraKitWrapper = () => {
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     // Camera State
-    const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
+    const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
     const [isSessionReady, setIsSessionReady] = useState(false);
     const [capturedImage, setCapturedImage] = useState<string | null>(null);
     const [currentLensId, setCurrentLensId] = useState<string>(CAMERAKIT_CONFIG.DEFAULT_LENS_ID);
